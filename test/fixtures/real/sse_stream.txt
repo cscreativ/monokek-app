@@ -1,0 +1,8 @@
+:connected
+
+event:order.created
+data:{"orderId":88,"orderUuid":"38e71941-cca8-48d9-9e0a-f8842d935819","reference":"CMD-7F8096B5","tableId":1}
+
+event:ticket.created
+data:{"roundId":144,"serverName":"Waiter User","stationId":2,"tableName":"Emporter — Douala","orderId":88}
+

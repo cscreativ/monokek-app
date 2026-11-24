@@ -1,0 +1,108 @@
+name: Build
+
+# push / PR  -> analyse + tests only (no secrets needed)
+# tag v*     -> Windows .exe (installer + portable zip), published as a GitHub Release
+# manual     -> same build, kept as a workflow artifact only
+# Android is built locally (tool/build_release.sh): the signing key stays off GitHub.
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Pinned on purpose: "channel: stable" alone moved to 3.50.0 overnight, where package:flutter/material.dart is deprecated
+  # (46 infos, and `flutter analyze` treats infos as fatal) and the pipeline went red with no change in our code. Bump this
+  # deliberately, together with the material_ui migration, after running analyze + test locally on the new version.
+  FLUTTER_VERSION: '3.44.1'
+  # Tag v1.2.3 -> 1.2.3; otherwise the version from pubspec.yaml is used as is.
+  BUILD_NAME: ${{ startsWith(github.ref, 'refs/tags/v') && github.ref_name || '' }}
+  BUILD_NUMBER: ${{ github.run_number }}
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: flutter analyze
+      # live_backend_test.dart is skipped on its own unless LIVE_API is defined.
+      - run: flutter test
+
+  build-windows:
+    needs: test
+    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - name: Resolve version
+        id: ver
+        shell: bash
+        run: |
+          if [[ -n "$BUILD_NAME" ]]; then
+            v="${BUILD_NAME#v}"
+          else
+            v="$(grep -E '^version:' pubspec.yaml | sed -E 's/version:[[:space:]]*([0-9.]+).*/\1/')"
+          fi
+          echo "name=$v" >> "$GITHUB_OUTPUT"
+      - run: flutter pub get
+      - name: Build Windows release
+        shell: bash
+        env:
+          POS_CLIENT_SECRET: ${{ secrets.POS_CLIENT_SECRET }}
+        run: |
+          test -n "$POS_CLIENT_SECRET" || { echo "Secret POS_CLIENT_SECRET is not set"; exit 1; }
+          args=(--dart-define=POS_CLIENT_SECRET="$POS_CLIENT_SECRET" --build-name="${{ steps.ver.outputs.name }}" --build-number="$BUILD_NUMBER")
+          [[ -n "${{ vars.API_URL }}" ]] && args+=(--dart-define=API_URL="${{ vars.API_URL }}")
+          flutter build windows --release "${args[@]}"
+      - name: Portable zip
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force dist | Out-Null
+          Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath "dist/MonoKekPOS-${{ steps.ver.outputs.name }}-windows-x64.zip"
+      - name: Installer (Inno Setup)
+        shell: pwsh
+        run: |
+          choco install innosetup -y --no-progress
+          $src = (Resolve-Path build/windows/x64/runner/Release).Path
+          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" "/DAppVersion=${{ steps.ver.outputs.name }}" "/DSourceDir=$src" windows/installer/monokek.iss
+          Copy-Item build/installer/*.exe dist/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows
+          path: dist/*
+          if-no-files-found: error
+
+  release:
+    needs: build-windows
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          generate_release_notes: true

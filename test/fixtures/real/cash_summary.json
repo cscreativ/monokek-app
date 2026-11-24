@@ -1,0 +1,1 @@
+{"session":{"id":9,"registerId":1,"registerName":"Caisse principale","openingAmount":0.00,"closingAmount":null,"openedAt":"2026-10-05T05:27:01","closedAt":null,"expectedAmount":null,"note":null},"paymentsDetail":[{"method":"cash","total":8200.00},{"method":"momo","total":8200.00}],"totalSales":16400.00}

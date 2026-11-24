@@ -1,0 +1,78 @@
+[
+ {
+  "id": 17,
+  "categoryId": 1,
+  "categoryName": "Boissons",
+  "branchId": 1,
+  "sku": null,
+  "name": "33 EXPORT BTLE",
+  "description": null,
+  "price": 1000.0,
+  "purchasePrice": null,
+  "incentiveAmount": 0.0,
+  "formattedPrice": "1 000 FCFA",
+  "active": true,
+  "trackStock": false,
+  "stockCount": 49,
+  "alertStock": 0,
+  "type": "storable",
+  "image": "http://127.0.0.1:9000/monokek/products/74225c22-fbbc-4276-9796-c1d589c8fe97.jpg",
+  "modifiers": []
+ },
+ {
+  "id": 107,
+  "categoryId": 2,
+  "categoryName": "Desserts",
+  "branchId": 1,
+  "sku": null,
+  "name": "Fites platin au gigot de beouf",
+  "description": null,
+  "price": 8000.0,
+  "purchasePrice": 2000.0,
+  "incentiveAmount": 0.0,
+  "formattedPrice": "8 000 FCFA",
+  "active": true,
+  "trackStock": false,
+  "stockCount": 0,
+  "alertStock": 0,
+  "type": "consumable",
+  "image": null,
+  "modifiers": [
+   {
+    "id": 1,
+    "name": "Accom",
+    "type": "accompaniment",
+    "required": false,
+    "minSelect": 0,
+    "maxSelect": 1,
+    "items": [
+     {
+      "id": 4,
+      "name": "Riz",
+      "price": 500.0
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "name": "Supplements",
+    "type": "supplement",
+    "required": false,
+    "minSelect": 1,
+    "maxSelect": null,
+    "items": [
+     {
+      "id": 2,
+      "name": "pommes Frites",
+      "price": 200.0
+     },
+     {
+      "id": 3,
+      "name": "Plaintain frites",
+      "price": 500.0
+     }
+    ]
+   }
+  ]
+ }
+]

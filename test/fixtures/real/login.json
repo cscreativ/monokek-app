@@ -1,0 +1,1 @@
+{"status": "success", "data": {"user": {"id": 2, "name": "Cashier User", "role": "cashier"}, "token": "T", "refreshToken": "R", "expiresInSeconds": 1800}}

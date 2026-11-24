@@ -1,0 +1,12 @@
+# MonoKek — lets the logged-in desktop user print directly to USB thermal printers (Xprinter & co).
+#
+# Install (once per PC):
+#   sudo cp linux/udev/99-monokek-usb-printer.rules /etc/udev/rules.d/
+#   sudo udevadm control --reload-rules && sudo udevadm trigger
+# then unplug and replug the printer.
+#
+# Matches any USB device exposing a printer-class interface (class 07) and grants the user at the console
+# access to its device node (/dev/bus/usb/BBB/DDD) — what libusb needs. No other USB device is touched.
+# If your distribution has no systemd "uaccess" support, replace the action with:  MODE="0660", GROUP="lp"
+# and add the user to the "lp" group.
+SUBSYSTEM=="usb", ENV{DEVTYPE}=="usb_device", ENV{ID_USB_INTERFACES}=="*:0701*", TAG+="uaccess"

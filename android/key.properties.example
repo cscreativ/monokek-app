@@ -1,0 +1,11 @@
+# Copy to key.properties (git-ignored) and fill in. Keep the keystore OUTSIDE the repository
+# (a `git clean -fdx` would delete an ignored file inside it).
+#
+#   keytool -genkeypair -v -keystore ~/.monokek-signing/monokek-pos-release.p12 -storetype PKCS12 \
+#     -alias monokek-pos -keyalg RSA -keysize 4096 -validity 10950
+#
+# storeFile may be absolute or relative to android/.
+storePassword=<mot de passe du keystore>
+keyPassword=<même mot de passe (PKCS12)>
+keyAlias=monokek-pos
+storeFile=/home/<vous>/.monokek-signing/monokek-pos-release.p12

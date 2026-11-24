@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Release / profile builds: HTTPS only.
+
+  The LAN server presents a certificate issued by Caddy's own internal CA, which the person who
+  installs the tablet adds as a "CA certificate" (Settings > Security > Install a certificate; see
+  monokek-deploy/deploy/README.md). Android apps do NOT trust user-installed CAs by default, hence
+  the explicit "user" anchor below. The trade-off: any CA a user installs on the device is trusted
+  by this app too, so install only the server's CA on these terminals.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+            <certificates src="user" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>
