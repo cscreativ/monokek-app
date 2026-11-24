@@ -1,10 +1,10 @@
 // Split payment ("paiement partage") against a live monokek stack, through the app's real data layer.
 // Creates ONE order on a virtual table and pays it; leaves a cash session open if none was.
 //   flutter test test/split_payment_live_test.dart --dart-define=LIVE_API=127.0.0.1:8090
+// ignore_for_file: avoid_print
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:monokek_flutter/core/api/api_client.dart';
 import 'package:monokek_flutter/core/storage/app_storage.dart';
 import 'package:monokek_flutter/data/cashier_api.dart';
 import 'package:monokek_flutter/data/pos_api.dart';
