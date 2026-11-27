@@ -12,6 +12,7 @@ import '../../core/format.dart';
 import '../../core/theme/app_theme.dart';
 import '../../data/pos_api.dart';
 import '../../models/ordering.dart';
+import '../cashier/manager_pin_dialog.dart';
 import 'cart_store.dart';
 import 'pos_providers.dart';
 import 'stock_guard.dart';
@@ -73,6 +74,27 @@ class _CartPanelState extends ConsumerState<CartPanel> {
           )) {
         return _toast('Stock insuffisant pour ${p.name}', error: true);
       }
+    }
+    // Lowering or removing an item the kitchen already has is a manager's decision: PIN + reason, asked here, enforced by the server.
+    if (newQty < item.qty) {
+      Order? updated;
+      final ok = await showManagerPinDialog(
+        context,
+        title: newQty == 0 ? "RETIRER L'ARTICLE" : 'RÉDUIRE LA QUANTITÉ',
+        subtitle: newQty == 0 ? 'Déjà envoyé en cuisine — le retirer demande un manager' : 'De ${item.qty} à $newQty — déjà envoyé en cuisine',
+        confirmLabel: 'Confirmer',
+        reasonHint: "Ex: erreur de saisie, client a changé d'avis...",
+        onConfirm: (reason, pin) async {
+          updated = await ref.read(posApiProvider).updateRoundItemQty(round.id, item.id, newQty, managerPin: pin, reason: reason);
+        },
+      );
+      final order = updated;
+      if (ok && order != null && mounted) {
+        ref.read(activeOrderProvider(widget.tableId).notifier).setOrder(order);
+        ref.read(cartProvider.notifier).syncOrderId(order.id);
+        _toast(newQty == 0 ? 'Article retiré — la cuisine est prévenue' : 'Quantité réduite — la cuisine est prévenue');
+      }
+      return;
     }
     setState(() => _pendingItems.add(item.id));
     try {

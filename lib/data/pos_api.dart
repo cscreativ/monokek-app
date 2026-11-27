@@ -57,8 +57,14 @@ class PosApi {
     return SendRoundResult(Order.fromJson(body['order'] as Map<String, dynamic>), skipped);
   }
 
-  Future<Order> updateRoundItemQty(int roundId, int itemId, int qty) async {
-    final r = await _dio.patch('/api/pos/rounds/$roundId/items/$itemId', data: {'qty': qty});
+  /// Raising a quantity needs nothing more. LOWERING it (or removing the item) is refused by the server without a manager's PIN and a reason:
+  /// the kitchen already has the item.
+  Future<Order> updateRoundItemQty(int roundId, int itemId, int qty, {String? managerPin, String? reason}) async {
+    final r = await _dio.patch('/api/pos/rounds/$roundId/items/$itemId', data: {
+      'qty': qty,
+      'managerPin': ?managerPin,
+      'reason': ?reason,
+    });
     return Order.fromJson(r.data as Map<String, dynamic>);
   }
 
