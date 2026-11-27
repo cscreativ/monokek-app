@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/api/envelope.dart';
-import '../../core/sse/notifications_service.dart';
 import '../../core/theme/app_theme.dart';
 import '../../data/pos_api.dart';
 import '../../models/floorplan.dart';
@@ -47,21 +46,6 @@ class _TablesPageState extends ConsumerState<TablesPage> {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final floors = ref.watch(floorsProvider);
-
-    // The server only addresses ticket.updated to whoever sent the round (plus till/management), so a waiter
-    // receiving "ready" is being told about their own order — wherever (local or central kitchen) it was prepared.
-    ref.listen(sseEventsProvider, (_, next) {
-      final e = next.value;
-      if (e != null && e.name == 'ticket.delayed') {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Commande #${e.map['orderId'] ?? ''} : en attente de la cuisine depuis ${e.map['pendingMinutes'] ?? '?'} min'),
-          backgroundColor: Theme.of(context).colorScheme.error,
-        ));
-      }
-      if (e != null && e.name == 'ticket.updated' && e.map['status'] == 'ready') {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Commande #${e.map['orderId'] ?? ''} : prête à servir')));
-      }
-    });
 
     return floors.when(
       loading: () => Center(child: Text('CHARGEMENT DU PLAN...', style: titleStyle.copyWith(fontSize: 14))),

@@ -10,9 +10,12 @@ import '../api/api_client.dart';
 import '../branch.dart';
 
 class SseEvent {
-  const SseEvent(this.name, this.data);
+  const SseEvent(this.name, this.data, {this.replayed = false});
   final String name;
   final dynamic data;
+
+  /// True for an update re-emitted by the catch-up after a reconnection (it happened while this terminal was offline).
+  final bool replayed;
 
   /// Payload as a map (all known events broadcast a JSON object); empty if absent/other shape.
   Map<String, dynamic> get map => data is Map<String, dynamic> ? data as Map<String, dynamic> : const {};
@@ -157,7 +160,7 @@ class NotificationsService {
       final list = res.data;
       if (list is! List) return;
       for (final item in list) {
-        if (item is Map<String, dynamic> && !_controller.isClosed) _controller.add(SseEvent('ticket.updated', item));
+        if (item is Map<String, dynamic> && !_controller.isClosed) _controller.add(SseEvent('ticket.updated', item, replayed: true));
       }
     } catch (_) {/* unscoped account, old server, offline again: the next reconnection or a manual refresh covers it */}
   }

@@ -72,7 +72,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(path: '/printer/usb', builder: (_, _) => const UsbPrinterPage()),
           GoRoute(path: '/unsupported', builder: (_, _) => const UnsupportedRolePage()),
           ShellRoute(
-            builder: (_, _, child) => WaiterShell(child: child),
+            builder: (_, _, child) => WaiterShell(alerts: true, child: child),
             routes: [
               GoRoute(path: '/pos/tables', builder: (_, _) => const TablesPage()),
               GoRoute(path: '/pos/tables/history', builder: (_, _) => const WaiterHistoryPage()),

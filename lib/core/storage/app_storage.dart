@@ -50,6 +50,14 @@ class AppStorage {
   String? get setupPinHash => _prefs.getString('setup-pin-hash');
   Future<void> setSetupPinHash(String hash) => _prefs.setString('setup-pin-hash', hash);
 
+  // --- Alert sounds on the waiter screens (per terminal) ---
+  bool get alertSoundEnabled => _prefs.getBool('alert-sound-enabled') ?? true;
+  double get alertSoundVolume => _prefs.getDouble('alert-sound-volume') ?? 1.0;
+  Future<void> setAlertSound({required bool enabled, required double volume}) async {
+    await _prefs.setBool('alert-sound-enabled', enabled);
+    await _prefs.setDouble('alert-sound-volume', volume);
+  }
+
   // --- Register assigned to this terminal ---
   int? get registerId => _prefs.getInt('register-id');
   String? get registerName => _prefs.getString('register-name');

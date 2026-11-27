@@ -9,6 +9,7 @@ import '../auth/lock_overlay.dart';
 import '../../shared/widgets/printer_status.dart';
 import '../../shared/widgets/sync_status.dart';
 import 'security_dialog.dart';
+import 'waiter_alerts.dart';
 
 /// Top bar + Tables / Commandes tabs around the waiter screens (port of pos/tables/layout.tsx).
 typedef ShellTab = (String label, IconData icon, String route);
@@ -28,11 +29,14 @@ const cashierTabs = <ShellTab>[
 /// Top bar + tabs around the waiter / cashier screens (port of pos/tables/layout.tsx and pos/sales/layout.tsx).
 /// The cashier variant shows the assigned register's name and a logout button.
 class WaiterShell extends ConsumerWidget {
-  const WaiterShell({super.key, required this.child, this.tabs = waiterTabs, this.registerName, this.showLogout = false});
+  const WaiterShell({super.key, required this.child, this.tabs = waiterTabs, this.registerName, this.showLogout = false, this.alerts = false});
   final Widget child;
   final List<ShellTab> tabs;
   final String? registerName;
   final bool showLogout;
+
+  /// The waiter variant rings for the waiter's own orders (ready, late, paid, cancelled).
+  final bool alerts;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -101,6 +105,8 @@ class WaiterShell extends ConsumerWidget {
                     context.push('/pos/clock');
                   case 'printer':
                     openUsbPrinterSettings(context, ref);
+                  case 'sound':
+                    showSoundSettings(context);
                   case 'security':
                     showSecurityDialog(context);
                   case 'lock':
@@ -112,6 +118,7 @@ class WaiterShell extends ConsumerWidget {
               itemBuilder: (_) => [
                 const PopupMenuItem(value: 'clock', child: Text('Pointage')),
                 const PopupMenuItem(value: 'printer', child: Text('Imprimante USB')),
+                if (alerts) const PopupMenuItem(value: 'sound', child: Text('Sons de notification')),
                 const PopupMenuItem(value: 'security', child: Text('Sécurité du compte')),
                 const PopupMenuItem(value: 'lock', child: Text('Verrouiller')),
                 if (showLogout) const PopupMenuItem(value: 'logout', child: Text('Déconnexion')),
@@ -124,6 +131,7 @@ class WaiterShell extends ConsumerWidget {
             const SyncStatus(),
             const SizedBox(width: 4),
             IconButton(tooltip: 'Imprimante USB', icon: const Icon(LucideIcons.printer, size: 18), onPressed: () => openUsbPrinterSettings(context, ref)),
+            if (alerts) IconButton(tooltip: 'Sons de notification', icon: const Icon(LucideIcons.volume2, size: 18), onPressed: () => showSoundSettings(context)),
             IconButton(tooltip: 'Pointage', icon: const Icon(LucideIcons.alarmClock, size: 18), onPressed: () => context.push('/pos/clock')),
             IconButton(tooltip: 'Sécurité', icon: const Icon(LucideIcons.userCog, size: 18), onPressed: () => showSecurityDialog(context)),
             const SizedBox(width: 4),
@@ -137,6 +145,7 @@ class WaiterShell extends ConsumerWidget {
     return Scaffold(
       body: SafeArea(
         child: Column(children: [
+          if (alerts) const WaiterAlerts(),
           Container(
             height: 56,
             padding: const EdgeInsets.symmetric(horizontal: 12),
