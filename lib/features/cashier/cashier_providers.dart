@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/sse/coalescer.dart';
 import '../../core/sse/notifications_service.dart';
 import '../../data/cashier_api.dart';
 import '../../data/pos_api.dart';
@@ -12,9 +13,11 @@ final cashStatusProvider = FutureProvider.autoDispose<CashStatus>((ref) => ref.w
 
 /// Orders of the current shift. SSE payloads carry ids only, so each event refetches the list.
 final salesOrdersProvider = FutureProvider.autoDispose<List<Order>>((ref) {
+  final refresh = Coalescer(ref.invalidateSelf);   // one refetch per burst, not one per event
+  ref.onDispose(refresh.dispose);
   final sub = ref.listen(sseEventsProvider, (_, next) {
     final n = next.value?.name;
-    if (n == 'order.created' || n == 'order.updated' || n == 'ticket.created' || n == 'ticket.updated') ref.invalidateSelf();
+    if (n == 'order.created' || n == 'order.updated' || n == 'ticket.created' || n == 'ticket.updated') refresh.trigger();
   });
   ref.onDispose(sub.close);
   return ref.watch(posApiProvider).historyPos();
@@ -26,6 +29,13 @@ final roomChargeEnabledProvider = FutureProvider<bool>((ref) => ref.watch(posApi
 final barStationProvider = FutureProvider.autoDispose<KitchenStation?>((ref) => ref.watch(cashierApiProvider).barStation());
 
 /// Bar counter tickets. Finishing a ticket here means "served" and removes it from the board.
+/// The counter's board refreshes at most once per second however many events arrive.
+final comptoirRefreshProvider = Provider.autoDispose.family<Coalescer, int>((ref, stationId) {
+  final c = Coalescer(() => ref.read(comptoirTicketsProvider(stationId).notifier).refresh(), interval: const Duration(seconds: 1));
+  ref.onDispose(c.dispose);
+  return c;
+});
+
 class ComptoirTicketsNotifier extends AsyncNotifier<List<KitchenTicket>> {
   ComptoirTicketsNotifier(this.stationId);
   final int stationId;

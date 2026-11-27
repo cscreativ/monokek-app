@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/api/envelope.dart';
+import '../../core/sse/coalescer.dart';
 import '../../core/sse/notifications_service.dart';
 import '../../core/theme/app_theme.dart';
 import '../../data/pos_api.dart';
@@ -15,9 +16,11 @@ typedef _Filter = ({String date, String? status});
 final _myOrdersProvider = FutureProvider.autoDispose.family<List<Order>, _Filter>((ref, f) {
   // Live refresh only matters for today's list.
   if (f.date == DateFormat('yyyy-MM-dd').format(DateTime.now())) {
+    final refresh = Coalescer(ref.invalidateSelf);   // one refetch per burst of events
+    ref.onDispose(refresh.dispose);
     final sub = ref.listen(sseEventsProvider, (_, next) {
       if (next.value?.name == 'order.updated') {
-        ref.invalidateSelf(); // the sound is rung once, centrally, by WaiterAlerts (and only for my orders)
+        refresh.trigger(); // the sound is rung once, centrally, by WaiterAlerts (and only for my orders)
       }
     });
     ref.onDispose(sub.close);

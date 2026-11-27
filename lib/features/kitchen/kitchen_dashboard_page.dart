@@ -42,7 +42,7 @@ class KitchenDashboardPage extends ConsumerWidget {
     // A new ticket always changes some station's counter.
     ref.listen(sseEventsProvider, (_, next) {
       final n = next.value?.name;
-      if (n == 'ticket.created' || n == 'ticket.updated') ref.invalidate(stationsProvider);
+      if (n == 'ticket.created' || n == 'ticket.updated') ref.read(stationsRefreshProvider).trigger();
     });
 
     return Scaffold(

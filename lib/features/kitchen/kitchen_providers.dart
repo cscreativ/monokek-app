@@ -2,6 +2,7 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/api/api_client.dart';
+import '../../core/sse/coalescer.dart';
 import '../../models/kitchen.dart';
 
 /// GET /api/kitchen/stations — bare array, includes each station's pending-ticket count.
@@ -37,6 +38,20 @@ class TicketsNotifier extends AsyncNotifier<List<KitchenTicket>> {
 }
 
 final ticketsProvider = AsyncNotifierProvider.autoDispose.family<TicketsNotifier, List<KitchenTicket>, int>(TicketsNotifier.new);
+
+/// The station list (counters) refreshes at most once per second however many ticket events arrive.
+final stationsRefreshProvider = Provider.autoDispose<Coalescer>((ref) {
+  final c = Coalescer(() => ref.invalidate(stationsProvider), interval: const Duration(seconds: 1));
+  ref.onDispose(c.dispose);
+  return c;
+});
+
+/// Refreshes one station's board AT MOST once per second however many events arrive (a kitchen wants it fresh, not once per event).
+final stationBoardRefreshProvider = Provider.autoDispose.family<Coalescer, int>((ref, stationId) {
+  final c = Coalescer(() => ref.read(ticketsProvider(stationId).notifier).refresh(), interval: const Duration(seconds: 1));
+  ref.onDispose(c.dispose);
+  return c;
+});
 
 final _player = AudioPlayer();
 

@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/sse/coalescer.dart';
 import '../../core/sse/notifications_service.dart';
 import '../../data/pos_api.dart';
 import '../../models/catalog.dart';
@@ -10,9 +11,13 @@ import '../auth/auth_controller.dart';
 /// Floors with their tables. The SSE payload is only ids, so events just trigger a refetch:
 /// the server stays the single source of truth.
 final floorsProvider = FutureProvider.autoDispose<List<Floor>>((ref) async {
+  // A table changes state when an order is opened, paid, cancelled or moved: kitchen tickets never touch it, so they no longer refetch the plan.
+  // And a burst of events refetches once (see Coalescer), not once per event.
+  final refresh = Coalescer(ref.invalidateSelf);
+  ref.onDispose(refresh.dispose);
   final sub = ref.listen(sseEventsProvider, (_, next) {
     final n = next.value?.name;
-    if (n == 'order.created' || n == 'order.updated' || n == 'ticket.created' || n == 'ticket.updated') ref.invalidateSelf();
+    if (n == 'order.created' || n == 'order.updated') refresh.trigger();
   });
   ref.onDispose(sub.close);
   return ref.watch(posApiProvider).listFloors();

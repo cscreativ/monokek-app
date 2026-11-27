@@ -41,12 +41,12 @@ class KitchenTicketsPage extends ConsumerWidget {
       final e = next.value;
       // Another screen of the same kitchen moved a ticket: refresh quietly (no sound, no toast).
       if (e != null && e.name == 'ticket.updated' && '${e.map['stationId']}' == '$id') {
-        ref.read(ticketsProvider(id).notifier).refresh();
+        ref.read(stationBoardRefreshProvider(id)).trigger();
         return;
       }
       if (e == null || e.name != 'ticket.created') return;
       if ('${e.map['stationId']}' != '$id') return;
-      ref.read(ticketsProvider(id).notifier).refresh();
+      ref.read(stationBoardRefreshProvider(id)).trigger();
       playNewTicketSound();
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Nouveau ticket : Table ${e.map['tableName'] ?? 'N/A'}')));
     });

@@ -56,7 +56,7 @@ class ComptoirPage extends ConsumerWidget {
         ref.listen(sseEventsProvider, (_, next) {
           final e = next.value;
           if (e == null || e.name != 'ticket.created' || '${e.map['stationId']}' != '$id') return;
-          ref.read(comptoirTicketsProvider(id).notifier).refresh();
+          ref.read(comptoirRefreshProvider(id)).trigger();
           playNewTicketSound();
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Nouveau ticket : Table ${e.map['tableName'] ?? 'N/A'}')));
         });
